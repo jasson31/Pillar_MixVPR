@@ -2,7 +2,7 @@ import pytorch_lightning as pl
 from torch.utils.data.dataloader import DataLoader
 from torchvision import transforms as T
 
-from dataloaders.GSVCitiesDataset import GSVCitiesDataset
+from dataloaders.PillarDataset import PillarDataset
 #from . import PittsburgDataset
 from . import MapillaryDataset
 
@@ -15,39 +15,17 @@ VIT_MEAN_STD = {'mean': [0.5, 0.5, 0.5],
                 'std': [0.5, 0.5, 0.5]}
 
 TRAIN_CITIES = [
-    'Bangkok',
-    'BuenosAires',
-    'LosAngeles',
-    'MexicoCity',
-    'OSL',
-    'Rome',
-    'Barcelona',
-    'Chicago',
-    'Madrid',
-    'Miami',
-    'Phoenix',
-    'TRT',
-    'Boston',
-    'Lisbon',
-    'Medellin',
-    'Minneapolis',
-    'PRG',
-    'WashingtonDC',
-    'Brussels',
-    'London',
-    'Melbourne',
-    'Osaka',
-    'PRS',
+    'Pillar',
 ]
 
 
-class GSVCitiesDataModule(pl.LightningDataModule):
+class PillarDataModule(pl.LightningDataModule):
     def __init__(self,
                  batch_size=32,
                  img_per_place=4,
                  min_img_per_place=4,
                  shuffle_all=False,
-                 image_size=(480, 640),
+                 image_size=(360, 640),
                  num_workers=4,
                  show_data_stats=True,
                  cities=TRAIN_CITIES,
@@ -106,12 +84,6 @@ class GSVCitiesDataModule(pl.LightningDataModule):
             # load validation sets (pitts_val, msls_val, ...etc)
             self.val_datasets = []
             for valid_set_name in self.val_set_names:
-                '''if valid_set_name.lower() == 'pitts30k_test':
-                    self.val_datasets.append(PittsburgDataset.get_whole_test_set(
-                        input_transform=self.valid_transform))
-                elif valid_set_name.lower() == 'pitts30k_val':
-                    self.val_datasets.append(PittsburgDataset.get_whole_val_set(
-                        input_transform=self.valid_transform))'''
                 if valid_set_name.lower() == 'msls_val':
                     self.val_datasets.append(MapillaryDataset.MSLS(
                         input_transform=self.valid_transform))
@@ -123,7 +95,7 @@ class GSVCitiesDataModule(pl.LightningDataModule):
                 self.print_stats()
 
     def reload(self):
-        self.train_dataset = GSVCitiesDataset(
+        self.train_dataset = PillarDataset(
             cities=self.cities,
             img_per_place=self.img_per_place,
             min_img_per_place=self.min_img_per_place,

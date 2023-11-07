@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 # make sure the path where the mapillary_sls validation dataset resides on your computer is correct.
 # the folder named train_val should reside in DATASET_ROOT path (that's the only folder you need from mapillary_sls)
 # I hardcoded the groundtruth for image to image evaluation, otherwise it would take ages to run the groundtruth script at each epoch.
-DATASET_ROOT = '../datasets/msls_val/'
+DATASET_ROOT = '../../Dataset/MSLS/'
 
 path_obj = Path(DATASET_ROOT)
 if not path_obj.exists():
@@ -22,16 +22,16 @@ class MSLS(Dataset):
         self.input_transform = input_transform
         
         # hard coded reference image names, this avoids the hassle of listing them at each epoch.
-        self.dbImages = np.load('../datasets/msls_val/msls_val_dbImages.npy')
+        self.dbImages = np.load('datasets/msls_val/msls_val_dbImages.npy')
         
         # hard coded query image names.
-        self.qImages = np.load('../datasets/msls_val/msls_val_qImages.npy')
+        self.qImages = np.load('datasets/msls_val/msls_val_qImages.npy')
         
         # hard coded index of query images
-        self.qIdx = np.load('../datasets/msls_val/msls_val_qIdx.npy')
+        self.qIdx = np.load('datasets/msls_val/msls_val_qIdx.npy')
         
         # hard coded groundtruth (correspondence between each query and its matches)
-        self.pIdx = np.load('../datasets/msls_val/msls_val_pIdx.npy', allow_pickle=True)
+        self.pIdx = np.load('datasets/msls_val/msls_val_pIdx.npy', allow_pickle=True)
         
         # concatenate reference images then query images so that we can use only one dataloader
         self.images = np.concatenate((self.dbImages, self.qImages[self.qIdx]))
