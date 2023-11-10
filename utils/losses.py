@@ -1,6 +1,6 @@
 from pytorch_metric_learning import losses, miners
 from pytorch_metric_learning.distances import CosineSimilarity, DotProductSimilarity
-from pillar_miner import PillarMiner
+from utils.pillar_losses import PillarMiner, PillarLoss
 
 
 def get_loss(loss_name):
@@ -16,6 +16,7 @@ def get_loss(loss_name):
                                                                             swap=False,
                                                                             smooth_loss=False,
                                                                             triplets_per_anchor="all",)
+    if loss_name == 'PillarLoss': return PillarLoss(alpha=1.0, beta=50, base=0.0, distance=DotProductSimilarity())
     raise NotImplementedError(f'Sorry, <{loss_name}> loss function is not implemented!')
 
 
@@ -23,5 +24,5 @@ def get_miner(miner_name, margin=0.1):
     if miner_name == 'TripletMarginMiner' : return miners.TripletMarginMiner(margin=margin, type_of_triplets="semihard") # all, hard, semihard, easy
     if miner_name == 'MultiSimilarityMiner' : return miners.MultiSimilarityMiner(epsilon=margin, distance=CosineSimilarity())
     if miner_name == 'PairMarginMiner' : return miners.PairMarginMiner(pos_margin=0.7, neg_margin=0.3, distance=DotProductSimilarity())
-    if miner_name == 'PillarMiner' : return PillarMiner(posDistThr=100, posRotThr=0.2, negDistThr=200, negRotThr=1.0)
+    if miner_name == 'PillarMiner' : return PillarMiner(epsilon=margin, posDistThr=0.1, posRotThr=0.2, negDistThr=0.2, negRotThr=1.0)
     return None

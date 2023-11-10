@@ -22,8 +22,8 @@ TRAIN_CITIES = [
 class PillarDataModule(pl.LightningDataModule):
     def __init__(self,
                  batch_size=32,
-                 img_per_place=4,
-                 min_img_per_place=4,
+                 img_per_place=1,
+                 min_img_per_place=1,
                  shuffle_all=False,
                  image_size=(360, 640),
                  num_workers=4,

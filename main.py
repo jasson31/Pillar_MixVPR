@@ -4,6 +4,7 @@ from pytorch_lightning.callbacks import Callback, ModelCheckpoint
 from torch.optim import lr_scheduler, optimizer
 import utils
 
+from dataloaders.PillarDataloader import PillarDataModule
 from dataloaders.GSVCitiesDataloader import GSVCitiesDataModule
 from models import helper
 
@@ -154,7 +155,7 @@ class VPRModel(pl.LightningModule):
         
         # reshape places and labels
         images = places.view(BS*N, ch, h, w)
-        labels = labels.view(-1)
+        labels = labels.view(-1, 7)
 
         # Feed forward the batch to the model
         descriptors = self(images) # Here we are calling the method forward that we defined above
@@ -226,10 +227,10 @@ class VPRModel(pl.LightningModule):
 if __name__ == '__main__':
     pl.utilities.seed.seed_everything(seed=190223, workers=True)
         
-    datamodule = GSVCitiesDataModule(
+    datamodule = PillarDataModule(
         batch_size=120,
-        img_per_place=4,
-        min_img_per_place=4,
+        img_per_place=1,
+        min_img_per_place=1,
         shuffle_all=False, # shuffle all images or keep shuffling in-city only
         random_sample_from_each_place=True,
         image_size=(320, 320),
@@ -283,8 +284,8 @@ if __name__ == '__main__':
         #----- Loss functions
         # example: ContrastiveLoss, TripletMarginLoss, MultiSimilarityLoss,
         # FastAPLoss, CircleLoss, SupConLoss,
-        loss_name='MultiSimilarityLoss',
-        miner_name='MultiSimilarityMiner', # example: TripletMarginMiner, MultiSimilarityMiner, PairMarginMiner
+        loss_name='PillarLoss',
+        miner_name='PillarMiner', # example: TripletMarginMiner, MultiSimilarityMiner, PairMarginMiner
         miner_margin=0.1,
         faiss_gpu=False
     )
@@ -308,11 +309,11 @@ if __name__ == '__main__':
 
         num_sanity_val_steps=0, # runs a validation step before stating training
         precision=16, # we use half precision to reduce  memory usage
-        max_epochs=80,
+        max_epochs=160,
         check_val_every_n_epoch=1, # run validation every epoch
         callbacks=[checkpoint_cb],# we only run the checkpointing callback (you can add more)
         reload_dataloaders_every_n_epochs=1, # we reload the dataset to shuffle the order
-        log_every_n_steps=20,
+        log_every_n_steps=5
         # fast_dev_run=True # uncomment or dev mode (only runs a one iteration train and validation, no checkpointing).
     )
 

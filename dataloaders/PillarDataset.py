@@ -13,7 +13,8 @@ default_transform = T.Compose([
 ])
 
 # NOTE: Hard coded path to dataset folder 
-BASE_PATH = '../../Dataset/gsv_cities/'
+BASE_PATH = '../../Dataset/'
+Dataset_name = 'PillarDataset_Original'
 
 if not Path(BASE_PATH).exists():
     raise FileNotFoundError(
@@ -56,14 +57,12 @@ class PillarDataset(Dataset):
             for each city in self.cities
         '''
         # read the first city dataframe
-        df = pd.read_csv(self.base_path+'Dataframes/'+f'{self.cities[0]}.csv')
+        df = pd.read_csv(self.base_path+f'{Dataset_name}/PillarDataframe.csv')
         df = df.sample(frac=1)  # shuffle the city dataframe
-        
 
-        # append other cities one by one
         for i in range(1, len(self.cities)):
             tmp_df = pd.read_csv(
-                self.base_path+'Dataframes/'+f'{self.cities[i]}.csv')
+                self.base_path + 'Dataframes/' + f'{self.cities[i]}.csv')
 
             # Now we add a prefix to place_id, so that we
             # don't confuse, say, place number 13 of NewYork
@@ -72,36 +71,35 @@ class PillarDataset(Dataset):
             # 99999 images and there won't be more than 99 cities
             # TODO: rename the dataset and hardcode these prefixes
             prefix = i
-            tmp_df['place_id'] = tmp_df['place_id'] + (prefix * 10**5)
+            tmp_df['place_id'] = tmp_df['place_id'] + (prefix * 10 ** 5)
             tmp_df = tmp_df.sample(frac=1)  # shuffle the city dataframe
-            
+
             df = pd.concat([df, tmp_df], ignore_index=True)
 
         # keep only places depicted by at least min_img_per_place images
-        res = df[df.groupby('place_id')['place_id'].transform(
-            'size') >= self.min_img_per_place]
+        res = df[df.groupby('place_id')['place_id'].transform('size') >= self.min_img_per_place]
         return res.set_index('place_id')
     
     def __getitem__(self, index):
         place_id = self.places_ids[index]
         
         # get the place in form of a dataframe (each row corresponds to one image)
-        place = self.dataframe.loc[place_id]
+        place = self.dataframe.loc[place_id].to_frame().T
         
         # sample K images (rows) from this place
         # we can either sort and take the most recent k images
         # or randomly sample them
-        if self.random_sample_from_each_place:
+        '''if self.random_sample_from_each_place:
             place = place.sample(n=self.img_per_place)
         else:  # always get the same most recent images
             place = place.sort_values(
-                by=['year', 'month', 'lat'], ascending=False)
-            place = place[: self.img_per_place]
+                by=['year', 'month'], ascending=False)
+            place = place[: self.img_per_place]'''
             
         imgs = []
         gt = []
         for i, row in place.iterrows():
-            px, pz, qx, qy, qz, qw, img_name = self.get_img_info(row)
+            px, py, pz, qx, qy, qz, qw, img_name = self.get_img_info(row)
 
             img_path = self.base_path + img_name
             img = self.image_loader(img_path)
@@ -111,7 +109,7 @@ class PillarDataset(Dataset):
 
             imgs.append(img)
 
-            gt.append[px, pz, qx, qy, qz, qw]
+            gt.append([px, py, pz, qx, qy, qz, qw])
 
         # NOTE: contrary to image classification where __getitem__ returns only one image 
         # in GSVCities, we return a place, which is a Tesor of K images (K=self.img_per_place)
@@ -130,10 +128,11 @@ class PillarDataset(Dataset):
     @staticmethod
     def get_img_info(row):
         px = row['px']
+        py = row['py']
         pz = row['pz']
         qx = row['qx']
         qy = row['qy']
         qz = row['qz']
         qw = row['qw']
         name = row['name']
-        return px, pz, qx, qy, qz, qw, name
+        return px, py, pz, qx, qy, qz, qw, name
