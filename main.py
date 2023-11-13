@@ -38,8 +38,8 @@ class VPRModel(pl.LightningModule):
                 lr_mult=0.3,
                 
                 #----- Loss
-                loss_name='MultiSimilarityLoss', 
-                miner_name='MultiSimilarityMiner', 
+                loss_name='PillarLoss',
+                miner_name='PillarMiner',
                 miner_margin=0.1,
                 faiss_gpu=False
                  ):
@@ -309,7 +309,7 @@ if __name__ == '__main__':
 
         num_sanity_val_steps=0, # runs a validation step before stating training
         precision=16, # we use half precision to reduce  memory usage
-        max_epochs=160,
+        max_epochs=80,
         check_val_every_n_epoch=1, # run validation every epoch
         callbacks=[checkpoint_cb],# we only run the checkpointing callback (you can add more)
         reload_dataloaders_every_n_epochs=1, # we reload the dataset to shuffle the order

@@ -24,5 +24,5 @@ def get_miner(miner_name, margin=0.1):
     if miner_name == 'TripletMarginMiner' : return miners.TripletMarginMiner(margin=margin, type_of_triplets="semihard") # all, hard, semihard, easy
     if miner_name == 'MultiSimilarityMiner' : return miners.MultiSimilarityMiner(epsilon=margin, distance=CosineSimilarity())
     if miner_name == 'PairMarginMiner' : return miners.PairMarginMiner(pos_margin=0.7, neg_margin=0.3, distance=DotProductSimilarity())
-    if miner_name == 'PillarMiner' : return PillarMiner(epsilon=margin, posDistThr=0.1, posRotThr=0.2, negDistThr=0.2, negRotThr=1.0)
+    if miner_name == 'PillarMiner' : return PillarMiner(epsilon=margin, posDistThr=0.3, posRotThr=0.2, negDistThr=1.0, negRotThr=1.0)
     return None

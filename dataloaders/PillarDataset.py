@@ -95,7 +95,7 @@ class PillarDataset(Dataset):
             place = place.sort_values(
                 by=['year', 'month'], ascending=False)
             place = place[: self.img_per_place]'''
-            
+
         imgs = []
         gt = []
         for i, row in place.iterrows():

@@ -23,8 +23,15 @@ valQueryReader = list(csv.reader(open(f'{dataset_directory}/{dataset_name}/{val_
 
 dataframe_list = []
 dataframe_list.append(['place_id', 'year', 'month', 'px', 'py', 'pz', 'qx', 'qy', 'qz', 'qw', 'name'])
+
+index = 0
 for i, line in enumerate(trainDatabaseReader):
-    dataframe_list.append([i, 2023, 11, float(line[2]) / 1000, 1.3, float(line[3]) / 1000, line[8], line[9], line[10], line[11], f'./{dataset_name}/{train_directory}/{line[1]}.png'])
+    dataframe_list.append([index, 2023, 11, float(line[2]) / 1000, 1.3, float(line[3]) / 1000, line[8], line[9], line[10], line[11], f'./{dataset_name}/{train_directory}/database/images/{line[1]}.png'])
+    index += 1
+
+for i, line in enumerate(trainQueryReader):
+    dataframe_list.append([index, 2023, 11, float(line[2]) / 1000, 1.3, float(line[3]) / 1000, line[8], line[9], line[10], line[11], f'./{dataset_name}/{train_directory}/query/images/{line[1]}.png'])
+    index += 1
 
 pd.DataFrame(dataframe_list).to_csv('PillarDataframe.csv', index=False, header=False)
 
@@ -44,7 +51,7 @@ for query_index, query_line in enumerate(valQueryReader):
         if np.linalg.norm(query_pose[:3] - db_pose[:3]) < posDistThr and np.linalg.norm(query_pose[3:] - db_pose[3:]) < rotDistThr:
             q_pair.append(db_index)
         if query_index == 0:
-            val_dbImages.append(f'{val_directory}/query/images/{query_line[1]}.png')
+            val_dbImages.append(f'{val_directory}/database/images/{db_line[1]}.png')
 
     if len(q_pair) != 0:
         val_qIdx.append(query_index)

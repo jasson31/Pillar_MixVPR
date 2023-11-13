@@ -17,18 +17,21 @@ class BaseDataset(data.Dataset):
     """Dataset with images from database and queries, used for inference (testing and building cache).
     """
 
-    def __init__(self, img_path):
+    def __init__(self, img_path, mode):
         super().__init__()
         self.img_path = img_path
 
         # path to images
-        if 'query' in self.img_path:
-            img_path_list = glob.glob(self.img_path + '/**/**/*.jpg', recursive=True)
+        if mode == 'query':
+            if 'Seg' in self.img_path:
+                img_path_list = glob.glob(self.img_path + '/*.png', recursive=True)
+            else:
+                img_path_list = glob.glob(self.img_path + '/*.jpg', recursive=True)
             self.img_path_list = img_path_list
-        elif 'db' in self.img_path:
-            img_path_list = glob.glob(self.img_path + '/**/**/*.jpg', recursive=True)
+        elif mode == 'db':
+            self.img_path_list = glob.glob(self.img_path + '/**/**/*.png', recursive=True)
             # sort images for db
-            self.img_path_list = sorted(img_path_list, key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
+            #self.img_path_list = sorted(img_path_list, key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
         else:
             raise ValueError('img_path should be either query or db')
         assert len(self.img_path_list) > 0, f'No images found in {self.img_path}'
@@ -113,7 +116,7 @@ def load_model(ckpt_path):
                      )
 
     state_dict = torch.load(ckpt_path)
-    model.load_state_dict(state_dict)
+    model.load_state_dict(state_dict['state_dict'])
 
     model.eval()
     print(f"Loaded model from {ckpt_path} Successfully!")
@@ -137,11 +140,13 @@ def record_matches(top_k_matches: np.ndarray,
                    database_dataset: BaseDataset,
                    out_file: str = 'record.txt') -> None:
     with open(f'{out_file}', 'a') as f:
+        f.write('header\n')
+        f.write('header\n')
         for query_index, db_indices in enumerate(tqdm(top_k_matches, ncols=100, desc='Recording matches')):
             pred_query_path = query_dataset.img_path_list[query_index]
             for i in db_indices.tolist():
                 pred_db_paths = database_dataset.img_path_list[i]
-            f.write(f'{pred_query_path} {pred_db_paths}\n')
+                f.write(f'{pred_query_path}, {pred_db_paths}\n')
 
 
 def visualize(top_k_matches: np.ndarray,
@@ -151,6 +156,7 @@ def visualize(top_k_matches: np.ndarray,
               img_resize_size: Tuple = (320, 320)) -> None:
     if not os.path.exists(visual_dir):
         os.makedirs(visual_dir)
+    top_k_matches = top_k_matches[:, :4]
     for q_idx, db_idx in enumerate(tqdm(top_k_matches, ncols=100, desc='Visualizing matches')):
         pred_q_path = query_dataset.img_path_list[q_idx]
         q_array = cv2.imread(pred_q_path, cv2.IMREAD_COLOR)
@@ -173,16 +179,16 @@ def visualize(top_k_matches: np.ndarray,
 
 def main():
     # load images
-    query_path = ''         # path to query images folder path
-    datasets_path = ''      # path to database images folder path
+    query_path = '../../Dataset/PillarDataset_Real/images'         # path to query images folder path
+    datasets_path = '../../Dataset/PillarDataset_Original/'      # path to database images folder path
 
-    assert query_path == '' and datasets_path == '', 'Please specify the path to the query and datasets'
+    #assert query_path == '' and datasets_path == '', 'Please specify the path to the query and datasets'
 
-    query_dataset = BaseDataset(query_path)
-    database_dataset = BaseDataset(datasets_path)
+    query_dataset = BaseDataset(query_path, 'query')
+    database_dataset = BaseDataset(datasets_path, 'db')
 
     # load model
-    model = load_model('./LOGS/resnet50_MixVPR_4096_channels(1024)_rows(4).ckpt')
+    model = load_model('./train_results/PillarDataset_Original.ckpt')
 
     # set up inference pipeline
     database_pipeline = InferencePipeline(model=model, dataset=database_dataset, feature_dim=4096)
@@ -193,13 +199,13 @@ def main():
     query_global_descriptors = query_pipeline.run(split='query')  # shape: (num_query, feature_dim)
 
     # calculate top-k matches
-    top_k_matches = calculate_top_k(q_matrix=query_global_descriptors, db_matrix=db_global_descriptors, top_k=10)
+    top_k_matches = calculate_top_k(q_matrix=query_global_descriptors, db_matrix=db_global_descriptors, top_k=100)
 
     # record query_database_matches
     record_matches(top_k_matches, query_dataset, database_dataset, out_file='./LOGS/record.txt')
 
     # visualize top-k matches
-    visualize(top_k_matches, query_dataset, database_dataset, visual_dir='./LOGS/visualize')
+    #visualize(top_k_matches, query_dataset, database_dataset, visual_dir='./LOGS/visualize')
 
 
 if __name__ == '__main__':
