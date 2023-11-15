@@ -4,3 +4,6 @@ LOGS
 
 .idea/
 venv/
+
+eval_results
+train_results

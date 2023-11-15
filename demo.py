@@ -12,6 +12,8 @@ import cv2
 
 from main import VPRModel
 
+import re
+
 
 class BaseDataset(data.Dataset):
     """Dataset with images from database and queries, used for inference (testing and building cache).
@@ -23,7 +25,7 @@ class BaseDataset(data.Dataset):
 
         # path to images
         if mode == 'query':
-            if 'Seg' in self.img_path:
+            if 'masks' in self.img_path:
                 img_path_list = glob.glob(self.img_path + '/*.png', recursive=True)
             else:
                 img_path_list = glob.glob(self.img_path + '/*.jpg', recursive=True)
@@ -34,6 +36,8 @@ class BaseDataset(data.Dataset):
             #self.img_path_list = sorted(img_path_list, key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
         else:
             raise ValueError('img_path should be either query or db')
+
+        self.img_path_list = sorted(self.img_path_list, key=lambda s: int(re.search(r'\d+', s).group()))
         assert len(self.img_path_list) > 0, f'No images found in {self.img_path}'
 
     def __getitem__(self, index):
@@ -103,13 +107,26 @@ def load_image(path):
 
 def load_model(ckpt_path):
     # Note that images must be resized to 320x320
-    model = VPRModel(backbone_arch='resnet50',
+    #model = VPRModel(backbone_arch='resnet50',
+    #                 layers_to_crop=[4],
+    #                 agg_arch='MixVPR',
+    #                 agg_config={'in_channels': 1024,
+    #                             'in_h': 20,
+    #                             'in_w': 20,
+    #                             'out_channels': 1024,
+    #                             'mix_depth': 4,
+    #                             'mlp_ratio': 1,
+    #                             'out_rows': 4},
+    #                 )
+
+
+    model = VPRModel(backbone_arch='resnet18',
                      layers_to_crop=[4],
                      agg_arch='MixVPR',
-                     agg_config={'in_channels': 1024,
+                     agg_config={'in_channels': 256,
                                  'in_h': 20,
                                  'in_w': 20,
-                                 'out_channels': 1024,
+                                 'out_channels': 128,
                                  'mix_depth': 4,
                                  'mlp_ratio': 1,
                                  'out_rows': 4},
@@ -179,8 +196,8 @@ def visualize(top_k_matches: np.ndarray,
 
 def main():
     # load images
-    query_path = '../../Dataset/PillarDataset_Real/images'         # path to query images folder path
-    datasets_path = '../../Dataset/PillarDataset_Original/'      # path to database images folder path
+    query_path = '../../Dataset/PillarDataset_Real/masks'         # path to query images folder path
+    datasets_path = '../../Dataset/PillarDataset_Seg/'      # path to database images folder path
 
     #assert query_path == '' and datasets_path == '', 'Please specify the path to the query and datasets'
 
@@ -188,11 +205,15 @@ def main():
     database_dataset = BaseDataset(datasets_path, 'db')
 
     # load model
-    model = load_model('./train_results/PillarDataset_Original.ckpt')
+    model = load_model('./train_results/PillarDataset_Seg.ckpt')
 
     # set up inference pipeline
-    database_pipeline = InferencePipeline(model=model, dataset=database_dataset, feature_dim=4096)
-    query_pipeline = InferencePipeline(model=model, dataset=query_dataset, feature_dim=4096)
+    # For ResNet50
+    #database_pipeline = InferencePipeline(model=model, dataset=database_dataset, feature_dim=4096)
+    #query_pipeline = InferencePipeline(model=model, dataset=query_dataset, feature_dim=4096)
+    # For ResNet18
+    database_pipeline = InferencePipeline(model=model, dataset=database_dataset, feature_dim=512)
+    query_pipeline = InferencePipeline(model=model, dataset=query_dataset, feature_dim=512)
 
     # run inference
     db_global_descriptors = database_pipeline.run(split='db')  # shape: (num_db, feature_dim)
