@@ -5,7 +5,7 @@ from torch.optim import lr_scheduler, optimizer
 import utils
 
 from dataloaders.PillarDataloader import PillarDataModule
-from dataloaders.GSVCitiesDataloader import GSVCitiesDataModule
+#from dataloaders.GSVCitiesDataloader import GSVCitiesDataModule
 from models import helper
 import torch.nn as nn
 
