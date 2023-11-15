@@ -94,7 +94,7 @@ def load_image(path):
 
     # add transforms
     transforms = tvf.Compose([
-        tvf.Resize((320, 320), interpolation=tvf.InterpolationMode.BICUBIC),
+        tvf.Resize((80, 160), interpolation=tvf.InterpolationMode.BICUBIC),
         tvf.ToTensor(),
         tvf.Normalize([0.485, 0.456, 0.406],
                       [0.229, 0.224, 0.225])
@@ -107,30 +107,30 @@ def load_image(path):
 
 def load_model(ckpt_path):
     # Note that images must be resized to 320x320
-    #model = VPRModel(backbone_arch='resnet50',
-    #                 layers_to_crop=[4],
-    #                 agg_arch='MixVPR',
-    #                 agg_config={'in_channels': 1024,
-    #                             'in_h': 20,
-    #                             'in_w': 20,
-    #                             'out_channels': 1024,
-    #                             'mix_depth': 4,
-    #                             'mlp_ratio': 1,
-    #                             'out_rows': 4},
-    #                 )
-
-
-    model = VPRModel(backbone_arch='resnet18',
+    model = VPRModel(backbone_arch='resnet50',
                      layers_to_crop=[4],
                      agg_arch='MixVPR',
-                     agg_config={'in_channels': 256,
-                                 'in_h': 20,
-                                 'in_w': 20,
-                                 'out_channels': 128,
+                     agg_config={'in_channels': 1024,
+                                 'in_h': 5,
+                                 'in_w': 10,
+                                 'out_channels': 1024,
                                  'mix_depth': 4,
                                  'mlp_ratio': 1,
                                  'out_rows': 4},
                      )
+
+
+    #model = VPRModel(backbone_arch='resnet18',
+    #                 layers_to_crop=[4],
+    #                 agg_arch='MixVPR',
+    #                 agg_config={'in_channels': 256,
+    #                             'in_h': 5,
+    #                             'in_w': 10,
+    #                             'out_channels': 128,
+    #                             'mix_depth': 4,
+    #                             'mlp_ratio': 1,
+    #                             'out_rows': 4},
+    #                 )
 
     state_dict = torch.load(ckpt_path)
     model.load_state_dict(state_dict['state_dict'])
@@ -205,7 +205,7 @@ def main():
     database_dataset = BaseDataset(datasets_path, 'db')
 
     # load model
-    model = load_model('./train_results/PillarDataset_Seg.ckpt')
+    model = load_model('./train_results/PillarDataset_Seg_corr.ckpt')
 
     # set up inference pipeline
     # For ResNet50
