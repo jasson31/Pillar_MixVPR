@@ -73,7 +73,7 @@ class VPRModel(pl.LightningModule):
 
         self.faiss_gpu = faiss_gpu
 
-        self.correlation_encoder = nn.Sequential(nn.Conv2d(80 * 160, 3, kernel_size=(1, 1)), nn.ReLU())
+        self.correlation_encoder = nn.Sequential(nn.Conv2d(80 * 160, 3, kernel_size=(1, 1)), nn.Conv2d(3, 3, kernel_size=(1, 1)), nn.ReLU())
         
         # ----------------------------------
         # get the backbone and the aggregator
@@ -246,7 +246,7 @@ if __name__ == '__main__':
         min_img_per_place=1,
         shuffle_all=False, # shuffle all images or keep shuffling in-city only
         random_sample_from_each_place=True,
-        image_size=(80, 160),
+        image_size=(160, 160),
         num_workers=6,
         show_data_stats=True,
         #val_set_names=['pitts30k_val', 'pitts30k_test', 'msls_val'], # pitts30k_val, pitts30k_test, msls_val
@@ -280,7 +280,7 @@ if __name__ == '__main__':
         # For Resnet 50
         agg_arch='MixVPR',
         agg_config={'in_channels' : 1024,
-                'in_h' : 5,
+                'in_h' : 10,
                 'in_w' : 10,
                 'out_channels' : 1024,
                 'mix_depth' : 4,
