@@ -241,7 +241,7 @@ if __name__ == '__main__':
     pl.utilities.seed.seed_everything(seed=190223, workers=True)
         
     datamodule = PillarDataModule(
-        batch_size=50,
+        batch_size=40,
         img_per_place=1,
         min_img_per_place=1,
         shuffle_all=False, # shuffle all images or keep shuffling in-city only
