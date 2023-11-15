@@ -241,12 +241,12 @@ if __name__ == '__main__':
     pl.utilities.seed.seed_everything(seed=190223, workers=True)
         
     datamodule = PillarDataModule(
-        batch_size=30,
+        batch_size=50,
         img_per_place=1,
         min_img_per_place=1,
         shuffle_all=False, # shuffle all images or keep shuffling in-city only
         random_sample_from_each_place=True,
-        image_size=(160, 160),
+        image_size=(128, 160),
         num_workers=6,
         show_data_stats=True,
         #val_set_names=['pitts30k_val', 'pitts30k_test', 'msls_val'], # pitts30k_val, pitts30k_test, msls_val
@@ -280,7 +280,7 @@ if __name__ == '__main__':
         # For Resnet 50
         agg_arch='MixVPR',
         agg_config={'in_channels' : 1024,
-                'in_h' : 10,
+                'in_h' : 8,
                 'in_w' : 10,
                 'out_channels' : 1024,
                 'mix_depth' : 4,
