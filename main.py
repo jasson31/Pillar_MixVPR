@@ -7,6 +7,7 @@ import utils
 from dataloaders.PillarDataloader import PillarDataModule
 from dataloaders.GSVCitiesDataloader import GSVCitiesDataModule
 from models import helper
+import torch.nn as nn
 
 
 class VPRModel(pl.LightningModule):
@@ -71,6 +72,8 @@ class VPRModel(pl.LightningModule):
         self.batch_acc = [] # we will keep track of the % of trivial pairs/triplets at the loss level 
 
         self.faiss_gpu = faiss_gpu
+
+        self.correlation_encoder = nn.Sequential(nn.Conv2d(80 * 160, 3, kernel_size=(1, 1)), nn.ReLU())
         
         # ----------------------------------
         # get the backbone and the aggregator
@@ -79,11 +82,21 @@ class VPRModel(pl.LightningModule):
         
     # the forward pass of the lightning model
     def forward(self, x):
+        x = self.corr(x)
+        x = self.correlation_encoder(x)
         x = self.backbone(x)
         x = self.aggregator(x)
         return x
-    
-    # configure the optimizer 
+
+    def corr(self, image):
+        batch, channel, height, width = image.shape
+        image_reshaped = image.reshape(batch, height * width, channel)
+        corr = torch.matmul(image_reshaped, image_reshaped.transpose(1, 2))
+        corr = corr.view(batch, -1, height, width)
+        return corr
+
+
+    # configure the optimizer
     def configure_optimizers(self):
         if self.optimizer.lower() == 'sgd':
             optimizer = torch.optim.SGD(self.parameters(), 
@@ -228,12 +241,12 @@ if __name__ == '__main__':
     pl.utilities.seed.seed_everything(seed=190223, workers=True)
         
     datamodule = PillarDataModule(
-        batch_size=120,
+        batch_size=50,
         img_per_place=1,
         min_img_per_place=1,
         shuffle_all=False, # shuffle all images or keep shuffling in-city only
         random_sample_from_each_place=True,
-        image_size=(320, 320),
+        image_size=(80, 160),
         num_workers=6,
         show_data_stats=True,
         #val_set_names=['pitts30k_val', 'pitts30k_test', 'msls_val'], # pitts30k_val, pitts30k_test, msls_val
@@ -278,8 +291,8 @@ if __name__ == '__main__':
         # For Resnet 18
         agg_arch='MixVPR',
         agg_config={'in_channels': 256,
-                    'in_h': 20,
-                    'in_w': 20,
+                    'in_h': 5,
+                    'in_w': 10,
                     'out_channels': 128,
                     'mix_depth': 4,
                     'mlp_ratio': 1,
