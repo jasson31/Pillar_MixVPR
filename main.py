@@ -78,8 +78,8 @@ class VPRModel(pl.LightningModule):
         self.faiss_gpu = faiss_gpu
 
         self.image_height, self.image_width = corr_config['image_size']
-        self.patch_height, self.patch_width = corr_config['patch_size']
-        self.correlation_encoder = nn.Sequential(nn.Conv2d((self.image_height // self.patch_height) * (self.image_width // self.patch_width), 3, kernel_size=(1, 1)), nn.ReLU())
+        self.correlation_encoder = nn.Sequential(nn.Conv2d(self.image_height * self.image_width, 3, kernel_size=(1, 1)), nn.ReLU())
+        self.after_correlation_encoder = nn.Sequential(nn.Conv2d(3, 3, kernel_size=(3, 3), padding=1), nn.ReLU())
         
         # ----------------------------------
         # get the backbone and the aggregator
@@ -88,33 +88,19 @@ class VPRModel(pl.LightningModule):
         
     # the forward pass of the lightning model
     def forward(self, x):
-        x = self.corr(x)
-        x = self.correlation_encoder(x)
+        x_after_correlation = self.corr(x)
+        x_after_correlation = self.correlation_encoder(x_after_correlation)
+        x = self.after_correlation_encoder(x + x_after_correlation)
         x = self.backbone(x)
         x = self.aggregator(x)
         return x
 
-    '''def corr(self, image):
+    def corr(self, image):
         batch, channel, height, width = image.shape
         image_reshaped = image.reshape(batch, height * width, channel)
         corr = torch.matmul(image_reshaped, image_reshaped.transpose(1, 2))
         corr = corr.view(batch, -1, height, width)
-        return corr'''
-
-    def corr(self, image):
-        batch, channel, height, width = image.shape
-
-        result = []
-        for b in range(batch):
-            image_reshaped = image[b].reshape(channel, height // self.patch_height, self.patch_height, width // self.patch_width,
-                                              self.patch_width)
-            corr = torch.tensordot(image_reshaped, image_reshaped, dims=([0, 2, 4], [0, 2, 4]))
-            result.append(corr)
-
-        result = torch.stack(result).to(image.device)
-        result = result.view(batch, height // self.patch_height, width // self.patch_width, -1).permute(0, 3, 1, 2)
-        F.normalize(result, dim=1)
-        return result
+        return corr
 
     # configure the optimizer
     def configure_optimizers(self):
@@ -260,7 +246,7 @@ class VPRModel(pl.LightningModule):
 if __name__ == '__main__':
     pl.utilities.seed.seed_everything(seed=190223, workers=True)
 
-    image_size = (360, 640)
+    image_size = (112, 160)
     datamodule = PillarDataModule(
         batch_size=30,
         img_per_place=1,
@@ -301,15 +287,14 @@ if __name__ == '__main__':
         # For Resnet 50
         agg_arch='MixVPR',
         agg_config={'in_channels' : 1024,
-                'in_h' : 5,
-                'in_w' : 8,
+                'in_h' : 7,
+                'in_w' : 10,
                 'out_channels' : 1024,
                 'mix_depth' : 4,
                 'mlp_ratio' : 1,
                 'out_rows' : 4}, # the output dim will be (out_rows * out_channels)
 
-        corr_config={'patch_size': (5, 5),
-                     'image_size': image_size},
+        corr_config={'image_size': image_size},
 
         # For Resnet 18
         #agg_arch='MixVPR',
