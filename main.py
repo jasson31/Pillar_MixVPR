@@ -78,9 +78,9 @@ class VPRModel(pl.LightningModule):
         self.faiss_gpu = faiss_gpu
 
         self.image_height, self.image_width = corr_config['image_size']
-        self.correlation_encoder = nn.Sequential(nn.Conv2d(self.image_height * self.image_width, self.image_height * self.image_width // 4, kernel_size=(1, 1)), nn.ReLU(),
-                                                 nn.Conv2d(self.image_height * self.image_width // 4, self.image_height * self.image_width // 16, kernel_size=(1, 1)), nn.ReLU(),
-                                                 nn.Conv2d(self.image_height * self.image_width // 16, 3, kernel_size=(1, 1)), nn.ReLU())
+        self.correlation_encoder = nn.Sequential(nn.Conv2d(self.image_height * self.image_width, self.image_height * self.image_width // 16, kernel_size=(1, 1)), nn.ReLU(),
+                                                 nn.Conv2d(self.image_height * self.image_width // 16, self.image_height * self.image_width // 32, kernel_size=(1, 1)), nn.ReLU(),
+                                                 nn.Conv2d(self.image_height * self.image_width // 32, 3, kernel_size=(1, 1)), nn.ReLU())
         self.after_correlation_encoder = nn.Sequential(nn.Conv2d(3, 3, kernel_size=(3, 3), padding=1), nn.ReLU())
         
         # ----------------------------------
