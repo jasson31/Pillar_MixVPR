@@ -73,7 +73,7 @@ class VPRModel(pl.LightningModule):
 
         self.faiss_gpu = faiss_gpu
 
-        self.correlation_encoder = nn.Sequential(nn.Conv2d(112 * 160, 3, kernel_size=(1, 1)), nn.Conv2d(3, 3, kernel_size=(1, 1)), nn.ReLU())
+        self.correlation_encoder = nn.Sequential(nn.Conv2d(112 * 160, 160, kernel_size=(1, 1)), nn.ReLU(), nn.Conv2d(160, 80, kernel_size=(1, 1)), nn.ReLU(), nn.Conv2d(80, 3, kernel_size=(1, 1)), nn.ReLU())
         
         # ----------------------------------
         # get the backbone and the aggregator
@@ -94,7 +94,6 @@ class VPRModel(pl.LightningModule):
         corr = torch.matmul(image_reshaped, image_reshaped.transpose(1, 2))
         corr = corr.view(batch, -1, height, width)
         return corr
-
 
     # configure the optimizer
     def configure_optimizers(self):
