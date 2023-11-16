@@ -78,7 +78,10 @@ class VPRModel(pl.LightningModule):
         self.faiss_gpu = faiss_gpu
 
         self.image_height, self.image_width = corr_config['image_size']
-        self.correlation_encoder = nn.Sequential(nn.Conv2d(self.image_height * self.image_width, 3, kernel_size=(1, 1)), nn.ReLU())
+        self.correlation_encoder = nn.Sequential(nn.Conv2d(self.image_height * self.image_width, self.image_height * self.image_width // 2, kernel_size=(1, 1)), nn.ReLU(),
+                                                 nn.Conv2d(self.image_height * self.image_width // 2, self.image_height * self.image_width // 4, kernel_size=(1, 1)), nn.ReLU(),
+                                                 nn.Conv2d(self.image_height * self.image_width // 4, self.image_height * self.image_width // 8, kernel_size=(1, 1)), nn.ReLU(),
+                                                 nn.Conv2d(self.image_height * self.image_width // 8, 3, kernel_size=(1, 1)), nn.ReLU())
         self.after_correlation_encoder = nn.Sequential(nn.Conv2d(3, 3, kernel_size=(3, 3), padding=1), nn.ReLU())
         
         # ----------------------------------
@@ -88,9 +91,8 @@ class VPRModel(pl.LightningModule):
         
     # the forward pass of the lightning model
     def forward(self, x):
-        x_after_correlation = self.corr(x)
-        x_after_correlation = self.correlation_encoder(x_after_correlation)
-        x = self.after_correlation_encoder(x + x_after_correlation)
+        x = self.corr(x)
+        x = self.correlation_encoder(x)
         x = self.backbone(x)
         x = self.aggregator(x)
         return x
@@ -353,3 +355,4 @@ if __name__ == '__main__':
 
     # we call the trainer, we give it the model and the datamodule
     trainer.fit(model=model, datamodule=datamodule)
+    torch.save(model.state_dict, f'./LOGS/{model.encoder_arch}/last.ckpt')
