@@ -8,6 +8,7 @@ from dataloaders.PillarDataloader import PillarDataModule
 #from dataloaders.GSVCitiesDataloader import GSVCitiesDataModule
 from models import helper
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class VPRModel(pl.LightningModule):
@@ -112,6 +113,7 @@ class VPRModel(pl.LightningModule):
 
         result = torch.stack(result).to(image.device)
         result = result.view(batch, height // self.patch_height, width // self.patch_width, -1).permute(0, 3, 1, 2)
+        F.normalize(result, dim=1)
         return result
 
     # configure the optimizer
@@ -260,7 +262,7 @@ if __name__ == '__main__':
 
     image_size = (360, 640)
     datamodule = PillarDataModule(
-        batch_size=60,
+        batch_size=30,
         img_per_place=1,
         min_img_per_place=1,
         shuffle_all=False, # shuffle all images or keep shuffling in-city only
