@@ -78,7 +78,7 @@ class VPRModel(pl.LightningModule):
         self.faiss_gpu = faiss_gpu
 
         self.image_height, self.image_width = corr_config['image_size']
-        self.correlation_encoder = nn.Sequential(nn.Conv2d(self.image_height * self.image_width, 3, kernel_size=(5, 5), padding=2), nn.ReLU())
+        self.correlation_encoder = nn.Sequential(nn.Conv2d(self.image_height * self.image_width, 3, kernel_size=(3, 3), padding=1), nn.ReLU())
         
         # ----------------------------------
         # get the backbone and the aggregator
@@ -244,9 +244,9 @@ class VPRModel(pl.LightningModule):
 if __name__ == '__main__':
     pl.utilities.seed.seed_everything(seed=190223, workers=True)
 
-    image_size = (112, 160)
+    image_size = (80, 80)
     datamodule = PillarDataModule(
-        batch_size=30,
+        batch_size=50,
         img_per_place=1,
         min_img_per_place=1,
         shuffle_all=False, # shuffle all images or keep shuffling in-city only
@@ -285,8 +285,8 @@ if __name__ == '__main__':
         # For Resnet 50
         agg_arch='MixVPR',
         agg_config={'in_channels' : 1024,
-                'in_h' : 7,
-                'in_w' : 10,
+                'in_h' : 5,
+                'in_w' : 5,
                 'out_channels' : 1024,
                 'mix_depth' : 4,
                 'mlp_ratio' : 1,
