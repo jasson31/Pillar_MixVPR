@@ -78,7 +78,7 @@ class VPRModel(pl.LightningModule):
         self.faiss_gpu = faiss_gpu
 
         self.image_height, self.image_width = corr_config['image_size']
-        self.correlation_encoder = nn.Sequential(nn.Conv2d(self.image_height * self.image_width, 3, kernel_size=(1, 1)), nn.ReLU())
+        self.correlation_encoder = nn.Sequential(nn.Conv2d(self.image_height * self.image_width, 3, kernel_size=(1, 1)), nn.ReLU(), nn.Conv2d(3, 3, kernel_size=(1, 1)), nn.ReLU())
         
         # ----------------------------------
         # get the backbone and the aggregator
