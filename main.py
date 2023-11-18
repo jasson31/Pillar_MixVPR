@@ -245,9 +245,9 @@ class VPRModel(pl.LightningModule):
 if __name__ == '__main__':
     pl.utilities.seed.seed_everything(seed=190223, workers=True)
 
-    image_size = (80, 80)
+    image_size = (112, 160)
     datamodule = PillarDataModule(
-        batch_size=20,
+        batch_size=10,
         img_per_place=1,
         min_img_per_place=1,
         shuffle_all=False, # shuffle all images or keep shuffling in-city only
@@ -286,8 +286,8 @@ if __name__ == '__main__':
         # For Resnet 50
         agg_arch='MixVPR',
         agg_config={'in_channels' : 1024,
-                'in_h' : 5,
-                'in_w' : 5,
+                'in_h' : 7,
+                'in_w' : 10,
                 'out_channels' : 1024,
                 'mix_depth' : 4,
                 'mlp_ratio' : 1,
