@@ -10,8 +10,6 @@ from models import helper
 import torch.nn as nn
 
 
-image_size = (112, 160)
-
 class VPRModel(pl.LightningModule):
     """This is the main model for Visual Place Recognition
     we use Pytorch Lightning for modularity purposes.
@@ -240,6 +238,20 @@ class VPRModel(pl.LightningModule):
             
             
 if __name__ == '__main__':
+    image_size = (112, 160)
+
+    backbone_arch = 'resnet18'
+    in_h = image_size[0] // 16
+    in_w = image_size[1] // 16
+
+    if backbone_arch == 'resnet50':
+        in_channels = 1024
+        out_channels = 1024
+    elif backbone_arch == 'resnet18':
+        in_channels = 256
+        out_channels = 128
+
+
     pl.utilities.seed.seed_everything(seed=190223, workers=True)
         
     datamodule = PillarDataModule(
@@ -254,7 +266,8 @@ if __name__ == '__main__':
         #val_set_names=['pitts30k_val', 'pitts30k_test', 'msls_val'], # pitts30k_val, pitts30k_test, msls_val
         val_set_names=['msls_val'],  # pitts30k_val, pitts30k_test, msls_val
     )
-    
+
+
     # examples of backbones
     # resnet18, resnet50, resnet101, resnet152,
     # resnext50_32x4d, resnext50_32x4d_swsl , resnext101_32x4d_swsl, resnext101_32x8d_swsl
@@ -262,7 +275,7 @@ if __name__ == '__main__':
     # swinv2_base_window12to16_192to256_22kft1k
     model = VPRModel(
         #---- Encoder
-        backbone_arch='resnet50',
+        backbone_arch=backbone_arch,
         pretrained=True,
         layers_to_freeze=2,
         layers_to_crop=[4], # 4 crops the last resnet layer, 3 crops the 3rd, ...etc
@@ -278,24 +291,11 @@ if __name__ == '__main__':
         # agg_config={'in_channels': 2048,
         #             'out_channels': 2048},
 
-
-        # For Resnet 50
-        #agg_arch='MixVPR',
-        #agg_config={'in_channels' : 1024,
-        #        'in_h' : 7,
-        #        'in_w' : 10,
-        #        'out_channels' : 1024,
-        #        'mix_depth' : 4,
-        #        'mlp_ratio' : 1,
-        #        'out_rows' : 4},''' # the output dim will be (out_rows * out_channels)
-
-
-        # For Resnet 18
         agg_arch='MixVPR',
-        agg_config={'in_channels': 256,
-                    'in_h': 7,
-                    'in_w': 10,
-                    'out_channels': 128,
+        agg_config={'in_channels': in_channels,
+                    'in_h': in_h,
+                    'in_w': in_w,
+                    'out_channels': out_channels,
                     'mix_depth': 4,
                     'mlp_ratio': 1,
                     'out_rows': 4},  # the output dim will be (out_rows * out_channels)
