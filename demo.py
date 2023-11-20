@@ -37,7 +37,10 @@ class BaseDataset(data.Dataset):
         else:
             raise ValueError('img_path should be either query or db')
 
-        self.img_path_list = sorted(self.img_path_list, key=lambda s: int(re.search(r'\d+', s).group()))
+        self.img_path_list = np.unique(self.img_path_list)
+        self.img_path_list = np.array(sorted(self.img_path_list, key=lambda s: int(re.search(r'\d+', s).group())))
+
+        #self.img_path_list = sorted(self.img_path_list, key=lambda s: int(re.search(r'\d+', s).group()))
         assert len(self.img_path_list) > 0, f'No images found in {self.img_path}'
 
     def __getitem__(self, index):
@@ -94,7 +97,7 @@ def load_image(path):
 
     # add transforms
     transforms = tvf.Compose([
-        tvf.Resize((80, 160), interpolation=tvf.InterpolationMode.BICUBIC),
+        tvf.Resize((112, 160), interpolation=tvf.InterpolationMode.BICUBIC),
         tvf.ToTensor(),
         tvf.Normalize([0.485, 0.456, 0.406],
                       [0.229, 0.224, 0.225])
@@ -111,7 +114,7 @@ def load_model(ckpt_path):
                      layers_to_crop=[4],
                      agg_arch='MixVPR',
                      agg_config={'in_channels': 1024,
-                                 'in_h': 5,
+                                 'in_h': 7,
                                  'in_w': 10,
                                  'out_channels': 1024,
                                  'mix_depth': 4,
@@ -205,15 +208,15 @@ def main():
     database_dataset = BaseDataset(datasets_path, 'db')
 
     # load model
-    model = load_model('./train_results/PillarDataset_Seg_corr.ckpt')
+    model = load_model('./train_results/PillarDataset_Seg_corr_ResNet50.ckpt')
 
     # set up inference pipeline
     # For ResNet50
-    #database_pipeline = InferencePipeline(model=model, dataset=database_dataset, feature_dim=4096)
-    #query_pipeline = InferencePipeline(model=model, dataset=query_dataset, feature_dim=4096)
+    database_pipeline = InferencePipeline(model=model, dataset=database_dataset, feature_dim=4096)
+    query_pipeline = InferencePipeline(model=model, dataset=query_dataset, feature_dim=4096)
     # For ResNet18
-    database_pipeline = InferencePipeline(model=model, dataset=database_dataset, feature_dim=512)
-    query_pipeline = InferencePipeline(model=model, dataset=query_dataset, feature_dim=512)
+    #database_pipeline = InferencePipeline(model=model, dataset=database_dataset, feature_dim=512)
+    #query_pipeline = InferencePipeline(model=model, dataset=query_dataset, feature_dim=512)
 
     # run inference
     db_global_descriptors = database_pipeline.run(split='db')  # shape: (num_db, feature_dim)
