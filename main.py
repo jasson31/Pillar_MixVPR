@@ -10,6 +10,8 @@ from models import helper
 import torch.nn as nn
 
 
+image_size = (112, 160)
+
 class VPRModel(pl.LightningModule):
     """This is the main model for Visual Place Recognition
     we use Pytorch Lightning for modularity purposes.
@@ -246,7 +248,7 @@ if __name__ == '__main__':
         min_img_per_place=1,
         shuffle_all=False, # shuffle all images or keep shuffling in-city only
         random_sample_from_each_place=True,
-        image_size=(112, 160),
+        image_size=image_size,
         num_workers=6,
         show_data_stats=True,
         #val_set_names=['pitts30k_val', 'pitts30k_test', 'msls_val'], # pitts30k_val, pitts30k_test, msls_val
@@ -278,25 +280,25 @@ if __name__ == '__main__':
 
 
         # For Resnet 50
-        agg_arch='MixVPR',
-        agg_config={'in_channels' : 1024,
-                'in_h' : 7,
-                'in_w' : 10,
-                'out_channels' : 1024,
-                'mix_depth' : 4,
-                'mlp_ratio' : 1,
-                'out_rows' : 4}, # the output dim will be (out_rows * out_channels)
+        #agg_arch='MixVPR',
+        #agg_config={'in_channels' : 1024,
+        #        'in_h' : 7,
+        #        'in_w' : 10,
+        #        'out_channels' : 1024,
+        #        'mix_depth' : 4,
+        #        'mlp_ratio' : 1,
+        #        'out_rows' : 4},''' # the output dim will be (out_rows * out_channels)
 
 
         # For Resnet 18
-        #agg_arch='MixVPR',
-        #agg_config={'in_channels': 256,
-        #            'in_h': 5,
-        #            'in_w': 10,
-        #            'out_channels': 128,
-        #            'mix_depth': 4,
-        #            'mlp_ratio': 1,
-        #            'out_rows': 4},  # the output dim will be (out_rows * out_channels)
+        agg_arch='MixVPR',
+        agg_config={'in_channels': 256,
+                    'in_h': 7,
+                    'in_w': 10,
+                    'out_channels': 128,
+                    'mix_depth': 4,
+                    'mlp_ratio': 1,
+                    'out_rows': 4},  # the output dim will be (out_rows * out_channels)
         
         #---- Train hyperparameters
         lr=0.05, # 0.0002 for adam, 0.05 or sgd (needs to change according to batch size)
