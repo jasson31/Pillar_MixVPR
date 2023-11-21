@@ -14,6 +14,8 @@ from main import VPRModel
 
 import re
 
+image_size = (112, 160)
+backbone_arch = 'resnet18'
 
 class BaseDataset(data.Dataset):
     """Dataset with images from database and queries, used for inference (testing and building cache).
@@ -97,7 +99,7 @@ def load_image(path):
 
     # add transforms
     transforms = tvf.Compose([
-        tvf.Resize((112, 160), interpolation=tvf.InterpolationMode.BICUBIC),
+        tvf.Resize(image_size, interpolation=tvf.InterpolationMode.BICUBIC),
         tvf.ToTensor(),
         tvf.Normalize([0.485, 0.456, 0.406],
                       [0.229, 0.224, 0.225])
@@ -109,31 +111,28 @@ def load_image(path):
 
 
 def load_model(ckpt_path):
+    in_h = image_size[0] // 16
+    in_w = image_size[1] // 16
+
+    if backbone_arch == 'resnet50':
+        in_channels = 1024
+        out_channels = 1024
+    elif backbone_arch == 'resnet18':
+        in_channels = 256
+        out_channels = 128
+
     # Note that images must be resized to 320x320
-    model = VPRModel(backbone_arch='resnet50',
+    model = VPRModel(backbone_arch=backbone_arch,
                      layers_to_crop=[4],
                      agg_arch='MixVPR',
-                     agg_config={'in_channels': 1024,
-                                 'in_h': 7,
-                                 'in_w': 10,
-                                 'out_channels': 1024,
+                     agg_config={'in_channels': in_channels,
+                                 'in_h': in_h,
+                                 'in_w': in_w,
+                                 'out_channels': out_channels,
                                  'mix_depth': 4,
                                  'mlp_ratio': 1,
                                  'out_rows': 4},
                      )
-
-
-    #model = VPRModel(backbone_arch='resnet18',
-    #                 layers_to_crop=[4],
-    #                 agg_arch='MixVPR',
-    #                 agg_config={'in_channels': 256,
-    #                             'in_h': 5,
-    #                             'in_w': 10,
-    #                             'out_channels': 128,
-    #                             'mix_depth': 4,
-    #                             'mlp_ratio': 1,
-    #                             'out_rows': 4},
-    #                 )
 
     state_dict = torch.load(ckpt_path)
     model.load_state_dict(state_dict['state_dict'])
@@ -208,15 +207,17 @@ def main():
     database_dataset = BaseDataset(datasets_path, 'db')
 
     # load model
-    model = load_model('./train_results/PillarDataset_Seg_corr_ResNet50.ckpt')
+    model = load_model('./train_results/PillarDataset_Seg_ResNet18.ckpt')
 
     # set up inference pipeline
-    # For ResNet50
-    database_pipeline = InferencePipeline(model=model, dataset=database_dataset, feature_dim=4096)
-    query_pipeline = InferencePipeline(model=model, dataset=query_dataset, feature_dim=4096)
-    # For ResNet18
-    #database_pipeline = InferencePipeline(model=model, dataset=database_dataset, feature_dim=512)
-    #query_pipeline = InferencePipeline(model=model, dataset=query_dataset, feature_dim=512)
+
+    if backbone_arch == 'resnet50':
+        feature_dim = 4096
+    elif backbone_arch == 'resnet18':
+        feature_dim = 512
+
+    database_pipeline = InferencePipeline(model=model, dataset=database_dataset, feature_dim=feature_dim)
+    query_pipeline = InferencePipeline(model=model, dataset=query_dataset, feature_dim=feature_dim)
 
     # run inference
     db_global_descriptors = database_pipeline.run(split='db')  # shape: (num_db, feature_dim)
