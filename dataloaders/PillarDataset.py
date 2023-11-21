@@ -13,7 +13,7 @@ default_transform = T.Compose([
 ])
 
 # NOTE: Hard coded path to dataset folder 
-BASE_PATH = '../../Dataset/'
+BASE_PATH = '../datasets/'
 Dataset_name = 'PillarDataset_Original'
 
 if not Path(BASE_PATH).exists():
