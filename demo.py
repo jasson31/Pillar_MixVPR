@@ -15,7 +15,7 @@ from main import VPRModel
 import re
 
 image_size = (112, 160)
-backbone_arch = 'resnet18'
+backbone_arch = 'resnet50'
 
 class BaseDataset(data.Dataset):
     """Dataset with images from database and queries, used for inference (testing and building cache).
@@ -207,7 +207,7 @@ def main():
     database_dataset = BaseDataset(datasets_path, 'db')
 
     # load model
-    model = load_model('./train_results/PillarDataset_Seg_ResNet18.ckpt')
+    model = load_model('./train_results/PillarDataset_Seg_corr_ResNet50.ckpt')
 
     # set up inference pipeline
 
